@@ -1,146 +1,7 @@
-# docker-Java-kubernetes-project
+# Docker-Java-kubernetes-project
 
-
-INSTALL MINIKUBE 
-***********************************************************
-
-KUBECTL
-curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.20.4/2021-04-12/bin/linux/amd64/kubectl
-chmod +x ./kubectl
-mkdir -p $HOME/bin
-cp ./kubectl $HOME/bin/kubectl
-export PATH=$HOME/bin:$PATH
-echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-source $HOME/.bashrc
-kubectl version --short --client
-
-DOCKER
-yum install docker -y
-systemctl  start docker
-systemctl enable docker
-
-https://minikube.sigs.k8s.io/docs/start/
-***********************************************************
-
-
-
-INSTALL EKS SETUP
-#############################################################
-Step1: Take EC2 Instance with t2.MEDIUM instance type
-Step2: Create IAM Role with Admin policy for eks-cluster and attach to ec2-instance
-Step3: Install kubectl
-
-curl -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
-chmod +x ./kubectl
-mkdir -p $HOME/bin
-cp ./kubectl $HOME/bin/kubectl
-export PATH=$HOME/bin:$PATH
-echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-source $HOME/.bashrc
-kubectl version --short --client
-
-Step4: Install eksctl:
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/bin
-eksctl version
-
-Step5: MASTER Cluster creation:
-eksctl create cluster --name=eksdemo \
-                  --region=us-west-1 \
-                  --zones=us-west-1b,us-west-1c \
-                  --without-nodegroup 
-
-Step6: Add Iam-Oidc-Providers:
-eksctl utils associate-iam-oidc-provider \
-    --region us-west-1 \
-    --cluster eksdemo \
-    --approve 
-
-Allowing the service to connect with EKS
-
-
-Step7: WORKER NODE Create node-group:
-eksctl create nodegroup --cluster=eksdemo \
-                   --region=us-west-1 \
-                   --name=eksdemo-ng-public \
-                   --node-type=t2.medium \
-                   --nodes=2 \
-                   --nodes-min=2 \
-                   --nodes-max=4 \
-                   --node-volume-size=10 \
-                   --ssh-access \
-                   --ssh-public-key=Praveen-test \
-                   --managed \
-                   --asg-access \
-                   --external-dns-access \
-                   --full-ecr-access \
-                   --appmesh-access \
-                   --alb-ingress-access	
-
-
- 
-//eksctl delete nodegroup --cluster=eksdemo --region=us-east-1 --name=eksdemo-ng-public
-
-
-
-//eksctl delete cluster --name=eksdemo    --region=us-west-1	
-
-
-
-
-#############################################################
-
-
-HANDSON
-
-
-Deploying Java Applications with Docker and Kubernetes
-
-1) Build each project ->> mvn clean install -DskipTests
-
-2) Create docker hub account
-
-3) Build the image in local -> docker build -t praveensingam1994/shopfront:latest .
-
-docker build -t praveensingam1994/productcatalogue:latest .
-
-docker build -t praveensingam1994/stockmanager:latest .
-
-4) Push the image to your docker hub -> docker push praveensingam1994/shopfront:latest 
-
-docker push praveensingam1994/productcatalogue:latest
-
-docker push praveensingam1994/stockmanager:latest
-
-5) Go to kubernetes folder and create the pods -> 
-
-kubectl apply -f shopfront-service.yaml
-
-kubectl apply -f productcatalogue-service.yaml
-
-kubectl apply -f stockmanager-service.yaml
-
-6) minikube service servicename  -> 
-
-minikube service shopfront
-minikube service productcatalogue
-minikube service stockmanager
-
-7) Hit the url in browser -> 
-
-ORDER TO BUILD AND DEPLOY 
-
-shopfront -> productcatalogue -> stockmanager
-
-Endpoint for product --> /products
-Endpoint for stock --> /stocks
-
-
-
-
-#############################################################
 RUNNING ON WINDOWS 11 WITH DOCKER DESKTOP
-#############################################################
+-------------------------------------------
 
 This guide is tailored for running the project on Windows 11 using Docker Desktop (which includes built-in Kubernetes support). It assumes basic knowledge of Java, Maven, Docker, and Kubernetes for learning purposes. The project deploys three microservices: shopfront (Spring Boot), productcatalogue (Dropwizard), and stockmanager (Spring Boot).
 
@@ -252,6 +113,190 @@ Stopping the Dashboard
 -----------------------
 Press Ctrl + C in the terminal where kubectl proxy is running.
 
+
+------------------------
+INSTALL MINIKUBE 
+-----------------------
+1. Download kubectl binary
+  
+curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.20.4/2021-04-12/bin/linux/amd64/kubectl
+- curl -o kubectl: Downloads a file and saves it as "kubectl"
+- Downloads from Amazon EKS S3 bucket
+- Specific version: Kubernetes 1.20.4 for Linux AMD64 architecture
+
+2. Make kubectl executable
+   
+chmod +x ./kubectl
+- chmod +x: Adds execute permission to the file
+- Makes the kubectl binary executable
+
+3. Create bin directory
+
+mkdir -p $HOME/bin
+- mkdir -p: Creates directory (with parents if needed)
+- $HOME/bin: Creates a bin folder in user's home directory
+
+4. Copy kubectl to bin directory
+
+cp ./kubectl $HOME/bin/kubectl
+- Copies the kubectl binary to the newly created bin directory
+
+5. Add to PATH temporarily
+
+export PATH=$HOME/bin:$PATH
+- Adds $HOME/bin to the beginning of PATH environment variable
+- Temporary: Only lasts for current terminal session
+
+6. Make PATH change permanent
+
+echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+- echo: Outputs the text
+- >> ~/.bashrc: Appends the line to .bashrc file
+- .bashrc runs every time you open a new terminal
+- Permanent: Makes the PATH change persistent
+
+7. Reload bash configuration
+
+source $HOME/.bashrc
+- source: Executes the file in current shell
+- Reloads .bashrc to apply the PATH changes immediately
+
+8. Verify installation
+
+kubectl version --short --client
+- Tests if kubectl is working
+- --short: Shows abbreviated version info
+- --client: Only shows client version (no cluster connection needed)
+
+
+DOCKER
+----------
+yum install docker -y
+systemctl  start docker
+systemctl enable docker
+
+https://minikube.sigs.k8s.io/docs/start/
+***********************************************************
+
+
+
+INSTALL EKS SETUP
+================================================
+Step1: Take EC2 Instance with t2.MEDIUM instance type.
+
+Step2: Create IAM Role with Admin policy for eks-cluster and attach to ec2-instance.
+
+Step3: Install kubectl
+- curl -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
+- chmod +x ./kubectl
+- mkdir -p $HOME/bin
+- cp ./kubectl $HOME/bin/kubectl
+- export PATH=$HOME/bin:$PATH
+- echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+- source $HOME/.bashrc
+- kubectl version --short --client
+
+Step4: Install eksctl:
+- curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+- sudo mv /tmp/eksctl /usr/bin
+- eksctl version
+
+Step5: MASTER Cluster creation:
+- eksctl create cluster --name=eksdemo \
+                  --region=us-west-1 \
+                  --zones=us-west-1b,us-west-1c \
+                  --without-nodegroup 
+
+Step6: Add Iam-Oidc-Providers:
+- eksctl utils associate-iam-oidc-provider \
+    --region us-west-1 \
+    --cluster eksdemo \
+    --approve 
+
+Allowing the service to connect with EKS
+-------------------------------------------------
+Step7: WORKER NODE Create node-group:
+- eksctl create nodegroup --cluster=eksdemo \
+                   --region=us-west-1 \
+                   --name=eksdemo-ng-public \
+                   --node-type=t2.medium \
+                   --nodes=2 \
+                   --nodes-min=2 \
+                   --nodes-max=4 \
+                   --node-volume-size=10 \
+                   --ssh-access \
+                   --ssh-public-key=gurus-test \
+                   --managed \
+                   --asg-access \
+                   --external-dns-access \
+                   --full-ecr-access \
+                   --appmesh-access \
+                   --alb-ingress-access
+  
+This command creates a worker node group with:
+----------------------------------------------
+- Cluster: eksdemo
+- Region: us-west-1
+- Node Group Name: eksdemo-ng-public
+- Instance Type: t2.medium
+- Scaling: 2-4 nodes (min 2, max 4)
+- Storage: 10GB per node
+- SSH Access: Enabled with key Praveen-test
+- Managed: AWS manages the nodes
+- Additional Access: ECR, AppMesh, ALB Ingress, External DNS, ASG
+  
+  Delete Entire Cluster
+  ----------------------
+//eksctl delete nodegroup --cluster=eksdemo --region=us-east-1 --name=eksdemo-ng-public
+
+- Note: This is commented with // and has a region mismatch (us-east-1 vs us-west-1)
+  
+Delete Entire Cluster
+----------------------
+
+//eksctl delete cluster --name=eksdemo    --region=us-west-1	
+
+
+HANDSON
+==========
+
+Deploying Java Applications with Docker and Kubernetes
+
+1) Build each project ->> mvn clean install -DskipTests
+
+2) Create docker hub account
+
+3) Build the image in local -> docker build -t praveensingam1994/shopfront:latest .
+
+- docker build -t gurus41/productcatalogue:latest .
+
+- docker build -t gurus41/stockmanager:latest .
+
+4) Push the image to your docker hub -> docker push praveensingam1994/shopfront:latest 
+
+- docker push gurus41/productcatalogue:latest
+- docker push gurus41/stockmanager:latest
+
+5) Go to kubernetes folder and create the pods -> 
+
+- kubectl apply -f shopfront-service.yaml
+- kubectl apply -f productcatalogue-service.yaml
+- kubectl apply -f stockmanager-service.yaml
+
+6) minikube service servicename  -> 
+
+- minikube service shopfront
+- minikube service productcatalogue
+- minikube service stockmanager
+
+7) Hit the url in browser -> 
+
+- ORDER TO BUILD AND DEPLOY 
+shopfront -> productcatalogue -> stockmanager
+Endpoint for product --> /products
+Endpoint for stock --> /stocks
+
+
 Troubleshooting: If Services Not Accessible (e.g., ERR_CONNECTION_REFUSED)
 -------------------------------------------------------------------------
 1. Check Pod Status: kubectl get pods - Ensure all pods are Running (not Pending/CrashLoopBackOff).
@@ -272,7 +317,7 @@ Learning Tips
 - Resources: Kubernetes Docs, Docker Desktop Kubernetes.
 - Issues: Ensure Docker Desktop/Kubernetes enabled.
 
-#############################################################
+
 
 
 
