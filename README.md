@@ -54,6 +54,20 @@ Step 6: Access Services
 - kubectl get services for ports.
 - Browser: http://localhost:8010 (shopfront), http://localhost:8020/products (productcatalogue), http://localhost:8030/stocks (stockmanager).
 
+# Shopfront
+kubectl port-forward deployment/shopfront 8010:8010
+
+# Product Catalogue
+kubectl port-forward deployment/productcatalogue 8020:8020
+
+# Stock Manager
+kubectl port-forward deployment/stockmanager 8030:803
+
+# Once port forwarding is running, open your browser:
+- Shopfront: http://localhost:8010
+- Product Catalogue: http://localhost:8020/products
+- Stock Manager: http://localhost:8030/stock
+
 Step 7: Monitor and Troubleshoot
 --------------------------------
 - kubectl logs <pod-name>
@@ -82,6 +96,7 @@ Start Dashboard Proxy
 
 Access Dashboard
 -------------------
+
 - Open your browser and navigate to:http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 
 Login to Dashboard

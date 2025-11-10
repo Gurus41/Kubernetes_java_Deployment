@@ -1,4 +1,4 @@
----
+﻿---
 apiVersion: v1
 kind: Service
 metadata:
@@ -40,21 +40,19 @@ spec:
           value: "health,info"
         - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
           value: "always"
-        # Corrected Liveness Probe
         livenessProbe:
           httpGet:
-            path: /actuator/health  # Changed from /health to /actuator/health
+            path: /actuator/health
             port: 8030
-          initialDelaySeconds: 120  # Increased for Spring Boot startup
-          timeoutSeconds: 5         # Increased timeout
+          initialDelaySeconds: 120
+          timeoutSeconds: 5
           periodSeconds: 10
           failureThreshold: 3
-        # Added Readiness Probe
         readinessProbe:
           httpGet:
             path: /actuator/health
             port: 8030
-          initialDelaySeconds: 90   # Slightly less than liveness
+          initialDelaySeconds: 90
           timeoutSeconds: 5
           periodSeconds: 5
           failureThreshold: 3
