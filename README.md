@@ -136,6 +136,8 @@ Endpoint for product --> /products
 Endpoint for stock --> /stocks
 
 
+
+
 #############################################################
 RUNNING ON WINDOWS 11 WITH DOCKER DESKTOP
 #############################################################
